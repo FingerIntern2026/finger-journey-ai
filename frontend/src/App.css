@@ -1,18 +1,24 @@
 /* App.css */
 
-/* 전체 챗봇 화면 */
+
+/* =========================
+   전체 채팅 컨테이너
+========================= */
+
 .chat-container {
   width: 100%;
   max-width: 720px;
   height: 85vh;
   margin: 40px auto;
-  background-color: #ffffff;
 
   display: flex;
   flex-direction: column;
 
+  background-color: #ffffff;
+
   border: 1px solid #e5e5e5;
   border-radius: 24px;
+
   overflow: hidden;
 
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
@@ -30,17 +36,19 @@
   font-size: 22px;
   font-weight: 600;
   text-align: center;
+
   color: #111111;
 }
 
 .chat-container > p {
-  margin: 5px 0 18px;
+  margin: 5px 0 0;
+  padding-bottom: 18px;
 
   font-size: 13px;
   text-align: center;
+
   color: #8e8e93;
 
-  padding-bottom: 18px;
   border-bottom: 1px solid #eeeeee;
 }
 
@@ -65,92 +73,48 @@
 }
 
 
-/* 메시지가 없을 때 안내 문구 */
+/* 처음 들어왔을 때 안내 문구 */
 .chat-messages > p {
   margin: auto;
 
   font-size: 14px;
-  color: #a0a0a0;
-
   text-align: center;
-}
 
-
-/* 각각의 메시지 */
-.chat-messages > div {
-  display: flex;
-  flex-direction: column;
-
-  max-width: 72%;
-}
-
-
-/* 사용자 메시지 */
-.chat-messages > div:has(strong:first-child) {
-  margin-bottom: 4px;
-}
-
-
-/* 나 / AI 표시 */
-.chat-messages strong {
-  margin-bottom: 4px;
-
-  font-size: 11px;
-  font-weight: 500;
-
-  color: #9a9a9a;
-}
-
-
-/* 기본 말풍선 */
-.chat-messages div p {
-  margin: 0;
-
-  padding: 10px 14px;
-
-  font-size: 15px;
-  line-height: 1.45;
-
-  word-break: break-word;
-
-  border-radius: 18px;
-
-  background-color: #eeeeef;
-  color: #111111;
+  color: #a0a0a0;
 }
 
 
 /* =========================
-   사용자 / AI 말풍선
+   메시지 행
 ========================= */
-
-/*
-  현재 JSX 구조에서는 role에 따른 class가 없기 때문에
-  아래 message-row 구조를 사용할 경우 적용됩니다.
-*/
 
 .message-row {
   display: flex;
+
   width: 100%;
+
   margin-bottom: 4px;
 }
 
 
-/* AI 메시지 */
+/* AI 메시지 → 왼쪽 */
 .message-row.assistant {
   justify-content: flex-start;
 }
 
 
-/* 사용자 메시지 */
+/* 사용자 메시지 → 오른쪽 */
 .message-row.user {
   justify-content: flex-end;
 }
 
 
-/* 말풍선 공통 */
+/* =========================
+   말풍선 공통
+========================= */
+
 .message-bubble {
-  max-width: 72%;
+  max-width: 70%;
 
   padding: 10px 14px;
 
@@ -158,12 +122,16 @@
   line-height: 1.45;
 
   word-break: break-word;
+  white-space: pre-wrap;
 
   border-radius: 19px;
 }
 
 
-/* AI 말풍선 */
+/* =========================
+   AI 말풍선
+========================= */
+
 .message-row.assistant .message-bubble {
   background-color: #eeeeef;
   color: #111111;
@@ -172,7 +140,10 @@
 }
 
 
-/* 사용자 말풍선 */
+/* =========================
+   사용자 말풍선
+========================= */
+
 .message-row.user .message-bubble {
   background-color: #34c759;
   color: #ffffff;
@@ -187,35 +158,48 @@
 
 .chat-input {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
 
   gap: 8px;
 
   padding: 12px 16px 16px;
 
-  border-top: 1px solid #eeeeee;
-
   background-color: #ffffff;
+
+  border-top: 1px solid #eeeeee;
 }
 
 
-/* 입력창 */
-.chat-input input {
+/* =========================
+   textarea
+========================= */
+
+.chat-input textarea {
   flex: 1;
 
-  height: 42px;
+  min-height: 42px;
+  max-height: 120px;
 
-  padding: 0 16px;
+  padding: 10px 16px;
+
+  box-sizing: border-box;
 
   border: 1px solid #d1d1d6;
-  border-radius: 22px;
+  border-radius: 21px;
 
   background-color: #ffffff;
 
+  font-family: inherit;
   font-size: 14px;
+  line-height: 20px;
+
   color: #111111;
 
   outline: none;
+
+  resize: none;
+
+  overflow-y: auto;
 
   transition:
     border-color 0.2s,
@@ -224,16 +208,28 @@
 
 
 /* placeholder */
-.chat-input input::placeholder {
+.chat-input textarea::placeholder {
   color: #aaaaaa;
 }
 
 
-/* 입력창 선택 */
-.chat-input input:focus {
+/* 입력창 클릭 */
+.chat-input textarea:focus {
   border-color: #34c759;
 
   box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1);
+}
+
+
+/* textarea 스크롤바 */
+.chat-input textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-input textarea::-webkit-scrollbar-thumb {
+  background-color: #d6d6d6;
+
+  border-radius: 10px;
 }
 
 
@@ -242,6 +238,10 @@
 ========================= */
 
 .chat-input button {
+  position: relative;
+
+  flex-shrink: 0;
+
   width: 42px;
   height: 42px;
 
@@ -251,13 +251,10 @@
   border-radius: 50%;
 
   background-color: #34c759;
-  color: #ffffff;
 
-  font-size: 0;
+  color: transparent;
 
   cursor: pointer;
-
-  position: relative;
 
   transition:
     transform 0.15s,
@@ -265,7 +262,7 @@
 }
 
 
-/* 화살표 아이콘 */
+/* ↑ 화살표 */
 .chat-input button::after {
   content: "↑";
 
@@ -274,7 +271,7 @@
   top: 50%;
   left: 50%;
 
-  transform: translate(-50%, -52%);
+  transform: translate(-50%, -53%);
 
   font-size: 22px;
   font-weight: 700;
@@ -283,20 +280,21 @@
 }
 
 
-/* hover */
+/* 마우스 올렸을 때 */
 .chat-input button:hover:not(:disabled) {
   background-color: #2db84d;
+
   transform: scale(1.05);
 }
 
 
-/* 클릭 */
+/* 버튼 클릭 */
 .chat-input button:active:not(:disabled) {
   transform: scale(0.95);
 }
 
 
-/* 답변 기다리는 동안 */
+/* Gemini 답변 기다리는 동안 */
 .chat-input button:disabled {
   background-color: #b7dfc1;
 
@@ -305,7 +303,7 @@
 
 
 /* =========================
-   스크롤바
+   메시지 영역 스크롤바
 ========================= */
 
 .chat-messages::-webkit-scrollbar {
@@ -318,6 +316,7 @@
 
 .chat-messages::-webkit-scrollbar-thumb {
   background-color: #d6d6d6;
+
   border-radius: 10px;
 }
 
@@ -339,6 +338,16 @@
     border-radius: 0;
 
     box-shadow: none;
+  }
+
+  .chat-container > h1 {
+    padding-top: 18px;
+
+    font-size: 20px;
+  }
+
+  .chat-container > p {
+    padding-bottom: 14px;
   }
 
   .chat-messages {
