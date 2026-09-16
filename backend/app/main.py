@@ -1,64 +1,86 @@
 # main.py
-# FastAPI 서버의 시작점. 여기서 앱을 만들고, 엔드포인트(주소)를 정의합니다.
+# FastAPI 서버의 시작점. 앱을 생성하고 챗봇 API 엔드포인트를 정의합니다.
 
 import os
-from google.genai import types
+
 from dotenv import load_dotenv
-from google import genai
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from google import genai
+from google.genai import types
 
 from .schemas import ChatRequest, ChatResponse
 from .prompts import SYSTEM_PROMPT
+from .company_context import COMPANY_CONTEXT
 
-# .env 파일에 적어둔 값들(GEMINI_API_KEY 등)을 읽어옵니다
+
+# .env 파일의 환경변수(GEMINI_API_KEY 등)를 읽어옵니다.
 load_dotenv()
 
-# Gemini API에게 요청을 보낼 때 쓸 클라이언트(창구 역할)를 하나 만들어둡니다
+
+# Gemini API 클라이언트를 생성합니다.
 client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
-# FastAPI 앱 생성 - 이게 우리 서버 전체를 대표하는 존재입니다
+
+# FastAPI 앱을 생성합니다.
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-# POST 방식으로 /api/chat 주소에 요청이 오면 이 함수가 실행됩니다
+# POST /api/chat
+# 프론트에서 현재 질문(message)과 이전 대화(history)를 받아
+# 사내 규정과 함께 Gemini에 전달합니다.
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
 
-    # history 리스트를 "user: ...\nassistant: ..." 형태의 긴 텍스트로 합칩니다
+    # 이전 대화를 Gemini가 이해하기 쉬운 텍스트 형태로 변환합니다.
+    # 예:
+    # user: 재택근무 가능한가요?
+    # assistant: 재택근무는 팀별 운영 방침에 따라 가능합니다.
     history_text = "\n".join(
         f"{turn.role}: {turn.text}"
         for turn in request.history
     )
 
-    # 시스템 프롬프트 + 이전 대화 + 이번 질문을 하나의 프롬프트로 합칩니다
-    prompt = f"""
-{SYSTEM_PROMPT}
+    # Gemini에 전달할 내용을 구성합니다.
+    # 사내 규정 + 이전 대화 + 현재 질문을 함께 전달합니다.
+    contents = f"""
+[사내 규정]
+{COMPANY_CONTEXT}
 
 [이전 대화]
-{history_text}
+{history_text if history_text else "이전 대화 없음"}
 
 [현재 질문]
 user: {request.message}
 """
 
-    # Gemini API 호출 - 실패하면 500 에러로 처리
+    # Gemini API를 호출합니다.
     try:
         response = client.models.generate_content(
             model="gemini-3.5-flash-lite",
-            contents=f"[이전 대화]\n{history_text}\n\n[현재 질문]\nuser: {request.message}",
+            contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT  # 시스템 프롬프트를 여기 별도로 전달
+                system_instruction=SYSTEM_PROMPT
             )
         )
-    except Exception as e:
+
+    # Gemini 호출 중 문제가 발생하면 500 에러를 반환합니다.
+    except Exception:
         raise HTTPException(
             status_code=500,
             detail="Gemini API 호출에 실패했습니다."
         )
-        
-    # 응답 텍스트만 뽑아서 ChatResponse 형태로 반환
+
+    # Gemini가 생성한 답변 텍스트만 프론트에 반환합니다.
     return ChatResponse(
         reply=response.text
     )

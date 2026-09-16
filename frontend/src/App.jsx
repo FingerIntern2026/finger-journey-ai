@@ -1,122 +1,162 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  // 지금까지의 대화 내역
+  const [messages, setMessages] = useState([]);
+
+  // 현재 입력창 내용
+  const [input, setInput] = useState("");
+
+  // AI 답변 대기 여부
+  const [loading, setLoading] = useState(false);
+
+  // 메시지 전송
+  const handleSend = async () => {
+    // 빈 메시지이거나 이미 답변을 기다리는 중이면 전송하지 않음
+    if (!input.trim() || loading) {
+      return;
+    }
+
+    // 현재 질문
+    const currentInput = input.trim();
+
+    // 사용자 메시지 생성
+    const userMessage = {
+      role: "user",
+      text: currentInput,
+    };
+
+    // 사용자 메시지를 화면에 먼저 추가
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      userMessage,
+    ]);
+
+    // 입력창 비우기
+    setInput("");
+
+    // AI 답변 대기 시작
+    setLoading(true);
+
+    try {
+      // FastAPI 호출
+      const response = await fetch("http://localhost:8000/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        // 현재 질문 + 이전 대화 내역 전달
+        body: JSON.stringify({
+          message: currentInput,
+          history: messages,
+        }),
+      });
+
+      // 서버 오류 처리
+      if (!response.ok) {
+        throw new Error("챗봇 요청에 실패했습니다.");
+      }
+
+      // FastAPI 응답
+      const data = await response.json();
+
+      // AI 메시지 생성
+      const assistantMessage = {
+        role: "assistant",
+        text: data.reply,
+      };
+
+      // AI 답변을 화면에 추가
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        assistantMessage,
+      ]);
+    } catch (error) {
+      console.error("챗봇 오류:", error);
+    } finally {
+      // AI 답변 대기 종료
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+    <div className="chat-container">
+
+      {/* 상단 헤더 */}
+      <h1>Finger Journey</h1>
+      <p>신규 입사자 온보딩 챗봇</p>
+
+      {/* 채팅 메시지 영역 */}
+      <div className="chat-messages">
+
+        {/* 대화가 없을 때 */}
+        {messages.length === 0 && !loading && (
+          <p>궁금한 사내 규정을 물어보세요.</p>
+        )}
+
+        {/* 대화 목록 */}
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`message-row ${
+              message.role === "user"
+                ? "user"
+                : "assistant"
+            }`}
+          >
+            <div className="message-bubble">
+              {message.text}
+            </div>
+          </div>
+        ))}
+
+        {/* AI 답변 대기 */}
+        {loading && (
+          <div className="message-row assistant">
+            <div className="message-bubble">
+              답변을 작성하고 있습니다...
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 입력 영역 */}
+      <div className="chat-input">
+
+        <textarea
+          value={input}
+          placeholder="질문을 입력하세요."
+          rows={1}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter → 전송
+            // Shift + Enter → 줄바꿈
+            // 한글 조합 중 Enter → 전송하지 않음
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              !e.nativeEvent.isComposing
+            ) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
+        />
+
         <button
           type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={handleSend}
+          disabled={loading || !input.trim()}
+          aria-label="메시지 전송"
         >
-          Count is {count}
+          전송
         </button>
-      </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
