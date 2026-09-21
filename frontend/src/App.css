@@ -153,6 +153,46 @@
 
 
 /* =========================
+   추천 질문 칩 (진입 시, 채팅바 바로 위)
+========================= */
+
+.suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  padding: 0 16px 12px;
+
+  background-color: #ffffff;
+}
+
+.suggestion-chip {
+  flex-shrink: 0;
+
+  padding: 8px 14px;
+
+  border: 1px solid #d1d1d6;
+  border-radius: 100px;
+
+  background-color: #ffffff;
+
+  font-family: inherit;
+  font-size: 13px;
+  color: #34c759;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.suggestion-chip:hover {
+  background-color: #eafaf0;
+  border-color: #34c759;
+}
+
+/* =========================
    입력 영역
 ========================= */
 

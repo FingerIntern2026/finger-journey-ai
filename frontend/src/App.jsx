@@ -1,6 +1,15 @@
 import { useState } from "react";
 import "./App.css";
 
+// 진입 시 채팅바 위에 보여줄 추천 질문 칩
+// company_context.py의 데모 규정 항목(근무시간/연차/재택/복장)에 맞춰 구성
+const SUGGESTED_QUESTIONS = [
+  "근무시간이 어떻게 되나요?",
+  "연차는 어떻게 신청하나요?",
+  "재택근무 가능한가요?",
+  "복장 규정이 있나요?",
+];
+
 function App() {
   // 지금까지의 대화 내역
   const [messages, setMessages] = useState([]);
@@ -12,14 +21,18 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   // 메시지 전송
-  const handleSend = async () => {
+  // overrideText가 있으면(추천 질문 칩 클릭) 그 문구를 바로 보내고,
+  // 없으면 입력창(input)에 있는 내용을 보낸다
+  const handleSend = async (overrideText) => {
+    const textToSend = overrideText ?? input;
+
     // 빈 메시지이거나 이미 답변을 기다리는 중이면 전송하지 않음
-    if (!input.trim() || loading) {
+    if (!textToSend.trim() || loading) {
       return;
     }
 
     // 현재 질문
-    const currentInput = input.trim();
+    const currentInput = textToSend.trim();
 
     // 사용자 메시지 생성
     const userMessage = {
@@ -122,6 +135,22 @@ function App() {
         )}
       </div>
 
+      {/* 추천 질문 칩 — 대화 중에도 계속 노출 */}
+      {!loading && (
+        <div className="suggestion-chips">
+          {SUGGESTED_QUESTIONS.map((question) => (
+            <button
+              key={question}
+              type="button"
+              className="suggestion-chip"
+              onClick={() => handleSend(question)}
+            >
+              {question}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* 입력 영역 */}
       <div className="chat-input">
 
@@ -147,7 +176,7 @@ function App() {
 
         <button
           type="button"
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={loading || !input.trim()}
           aria-label="메시지 전송"
         >
