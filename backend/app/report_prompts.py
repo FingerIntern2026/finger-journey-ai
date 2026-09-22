@@ -1,111 +1,76 @@
 # report_prompts.py
-# "AI 완주 리포트"(오솔길 여정 리포트, PTH_CPL) 생성을 위한 프롬프트
+# "AI 완주 리포트" 생성을 위한 프롬프트
 #
-# 실제 화면 구성(디자인 기준):
-# 1. AI가 정리한 이야기 카드 — 서술형 텍스트 + 특성 칩 4개
-# 2. 근거가 된 퀴즈 답변 — 실제 퀴즈 문항/답변을 그대로 나열 (LLM이 만드는 게 아니라 입력값을 그대로 보여주는 영역)
-# 3. 완주 기념 3행시
+# 9/22 팀 설계 확정안에 맞춰 재작성함 (기존 story_title/trait_chips/quiz_evidence 구조는 폐기):
+# Spring이 사원 이름 + 퀴즈 응답 9개 + 3행시(이름 글자수만큼 가변 2~4행)를 넘기면,
+# 이 프롬프트로 Gemini를 호출해서 reportContent + keywords(4개)를 돌려받는다.
+# 통계/근거 문구 등은 이번 설계에서 범위 밖 (Spring이 별도로 처리하지 않음).
 #
-# ※ "핑거 동료 몇 %가 이 답변을 선택했어요" 같은 비율 정보는 실제 통계이므로
-#    LLM이 만들어내면 안 된다. 백엔드가 quiz_answer 테이블을 집계해서 별도로 계산하고,
-#    이 프롬프트의 결과(JSON)와 합쳐서 프론트에 내려줘야 한다.
+# headline/quote/quoteDescription : 완주 리포트 결과 화면(아티팩트 시안)의
+# 한 줄 타이틀 + 인용구 박스에 쓰기 위해 추가 (9/22 오후 재확장)
 
 REPORT_SYSTEM_PROMPT = """
-당신은 Finger Journey 온보딩 완주자를 위한 "AI 완주 리포트"의 이야기 부분을 작성하는 도우미입니다.
+당신은 Finger Journey 온보딩 완주자를 위한 "AI 완주 리포트"를 작성하는 도우미입니다.
 
-신규 입사자가 오솔길(온보딩)에서 남긴 징검다리 퀴즈 답변과 완주 3행시를 바탕으로,
-그 사람의 첫걸음을 따뜻하게 정리하는 짧은 이야기를 만들어줍니다.
+신규 입사자가 오솔길(온보딩)에서 남긴 징검다리 퀴즈 응답 9개와 완주 3행시를 바탕으로,
+그 사람의 첫걸음을 따뜻하게 정리하는 리포트 본문과 키워드를 만들어줍니다.
 
 다음 원칙을 반드시 지켜주세요.
 
 1. 결과는 반드시 아래 JSON 형식 그대로만 출력하세요. 다른 설명 문장을 앞뒤에 붙이지 마세요.
-2. story_title은 "{이름}님의 첫걸음" 형식으로 고정하세요.
-3. story는 2~3개 문단, 각 문단은 2~3문장으로 작성하세요.
-   - 입력된 퀴�즈 답변 중 최소 3개 이상을 자연스럽게 언급하며 서술하세요.
-   - 답변들 사이에 의외의 조합이나 성향이 보이면 짚어주되(예: 즉흥적인데 협업은 신중함),
-     억지로 반전을 만들지 말고 실제 답변에 근거해서만 이야기하세요.
+2. reportContent는 2~3문단(문단 구분은 \\n\\n)으로 작성하세요.
+   - 입력된 퀴즈 응답 9개 중 최소 4개 이상을 자연스럽게 언급하며 서술하세요.
+   - 응답들 사이에 의외의 조합이나 성향이 보이면 짚어주되, 억지로 반전을 만들지 말고
+     실제 응답에 근거해서만 이야기하세요.
    - 완주 3행시가 주어졌다면 마지막 문단에서 3행시가 풍기는 다짐/분위기를 한 줄로 짚어주세요.
    - 정중체(~해요체)로, 친근하지만 과하게 들뜨지 않은 톤으로 작성하세요.
-4. trait_chips는 정확히 4개. 각 퀴즈 답변 하나를 "OO파", "OO형", "OO 리버", "OO 편" 같은
-   짧고 캐릭터성 있는 명칭으로 바꾼 것이어야 합니다 (예: "아메리카노파", "즉흥 여행형").
-   지어내지 말고 실제 입력된 답변에서만 골라 변형하세요.
-5. 입력에 없는 취향/답변을 지어내지 마세요.
-6. 저장/공유/알림 등 실제로 정의되지 않은 기능은 언급하지 마세요.
+3. keywords는 정확히 4개. 각 단어는 리포트 내용을 요약하는 2~4글자 명사(예: "협업", "도전", "성장")로
+   작성하세요. 실제 응답에 근거해서만 뽑고 지어내지 마세요.
+4. headline은 이모지 1개 + 그 사람을 한 줄로 표현하는 짧은 문구(15자 내외, 예: "🎧 음악 들으며 출근하는 즉흥형 탐험가")로 작성하세요.
+   실제 퀴즈 응답에 근거해서만 작성하세요.
+5. quote는 그 사람에게 어울리는 짧고 임팩트 있는 한 문장(15자 내외, 예: "고민은 짧게, 발걸음은 크게.")으로 작성하세요.
+6. quoteDescription은 quote를 왜 골랐는지 1문장으로 짧게 덧붙이세요.
+7. 입력에 없는 취향/응답을 지어내지 마세요.
+8. 저장/공유/알림 등 실제로 정의되지 않은 기능은 언급하지 마세요.
 
 출력 JSON 형식 :
 {
-  "story_title": "string",
-  "story": "string (문단 구분은 \\n\\n)",
-  "trait_chips": ["string", "string", "string", "string"]
+  "headline": "string",
+  "reportContent": "string (문단 구분은 \\n\\n)",
+  "keywords": ["string", "string", "string", "string"],
+  "quote": "string",
+  "quoteDescription": "string"
 }
 """
 
 
-def build_report_prompt(name: str, quiz_answers: list[dict], acrostic: list[str] | None = None) -> str:
+def build_report_prompt(employee_name: str, quiz_responses: list[dict], acrostic_lines: list[dict]) -> str:
     """
-    name : "김핑거"
-    quiz_answers 예시 (징검다리 퀴즈 6문항 그대로) :
+    employee_name : "김신입"
+    quiz_responses : Spring의 quizResponses를 그대로 받음
     [
-        {"question": "커피 취향", "answer": "아메리카노"},
-        {"question": "맵기 레벨", "answer": "매운맛 리버"},
-        {"question": "여행 스타일", "answer": "즉흥형"},
-        {"question": "친해지는 법", "answer": "먼저 걸어요"},
-        {"question": "출근길", "answer": "음악"},
-        {"question": "협업 스타일", "answer": "바로 이야기"},
+        {"question": "출근 후 가장 먼저 하는 것은?", "selectedOption": "메일 확인"},
+        ...9개
     ]
-    acrostic : 완주 3행시, 이름 글자 수만큼의 줄 리스트. 예: ["김밥처럼", "핑계대지않고", "거대하게 가겠습니다"]
+    acrostic_lines : Spring의 acrosticLines를 그대로 받음 (이름 글자수만큼 2~4개)
+    [
+        {"letter": "김", "text": "김빠지지 않게 즉흥적으로"},
+        ...
+    ]
     """
-    answers_text = "\n".join(f"- {a['question']}: {a['answer']}" for a in quiz_answers)
+    responses_text = "\n".join(f"- {r['question']}: {r['selectedOption']}" for r in quiz_responses)
     acrostic_text = ""
-    if acrostic:
-        acrostic_text = "\n\n[완주 3행시]\n" + "\n".join(acrostic)
+    if acrostic_lines:
+        lines = "\n".join(f"{l['letter']} : {l['text']}" for l in acrostic_lines)
+        acrostic_text = f"\n\n[완주 3행시]\n{lines}"
 
     return f"""
 [이름]
-{name}
+{employee_name}
 
-[징검다리 퀴즈 답변]
-{answers_text}
+[징검다리 퀴즈 응답]
+{responses_text}
 {acrostic_text}
 
-위 내용을 바탕으로 시스템 프롬프트에 정의된 JSON 형식대로 AI 완주 리포트 이야기를 작성해주세요.
+위 내용을 바탕으로 시스템 프롬프트에 정의된 JSON 형식대로 AI 완주 리포트를 작성해주세요.
 """
-
-
-def merge_with_stats(llm_result: dict, quiz_answers: list[dict], answer_stats: dict) -> dict:
-    """
-    llm_result : build_report_prompt 결과를 Gemini에 넣어 받은 JSON(dict)
-    quiz_answers : build_report_prompt에 넣었던 것과 동일한 원본 답변 리스트
-
-    answer_stats : 문항별로 "회사 전체 비율"과 "같은 팀 인원수" 중 뭐가 더 의미 있는지가 다를 수 있어서,
-                   두 형태를 문항마다 섞어 쓸 수 있게 scope로 구분한다.
-                   {
-                     "커피 취향": {"scope": "company", "percentage": 42},
-                     "맵기 레벨": {"scope": "team", "team_name": "개발3팀", "team_size": 8, "count": 2},
-                     ...
-                   }
-                   회사 전체 인원이 충분히 쌓인 문항은 "company"(핑거 직원 42% 선택),
-                   아직 표본이 적어 팀 단위가 더 자연스러운 문항은 "team"(개발3팀 8명 중 2명 선택)으로 내려준다.
-                   이 함수는 문구 조립만 하고, 실제 비율/인원수 계산과 scope 판단은 백엔드가 한다.
-    """
-    evidence = []
-    for a in quiz_answers:
-        stat = answer_stats.get(a["question"])
-        same_answer_text = None
-        if stat:
-            if stat["scope"] == "company":
-                same_answer_text = f"핑거 직원 {stat['percentage']}% 선택"
-            elif stat["scope"] == "team":
-                same_answer_text = f"{stat['team_name']} {stat['team_size']}명 중 {stat['count']}명 선택"
-        evidence.append({
-            "question": a["question"],
-            "answer": a["answer"],
-            "same_answer_text": same_answer_text,  # None이면 프론트에서 문구 숨김 (집계할 데이터가 아직 없는 경우)
-        })
-
-    return {
-        "story_title": llm_result["story_title"],
-        "story": llm_result["story"],
-        "trait_chips": llm_result["trait_chips"],
-        "quiz_evidence": evidence,
-    }
