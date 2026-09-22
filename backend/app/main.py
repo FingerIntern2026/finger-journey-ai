@@ -1,6 +1,7 @@
 # main.py
 # FastAPI 서버의 시작점. 앱을 생성하고 챗봇 API 엔드포인트를 정의합니다.
 
+import json
 import os
 
 from dotenv import load_dotenv
@@ -9,8 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
 
-from .schemas import ChatRequest, ChatResponse
+from .schemas import ChatRequest, ChatResponse, ReportRequest, ReportResponse
 from .prompts import SYSTEM_PROMPT
+from .report_prompts import REPORT_SYSTEM_PROMPT, build_report_prompt
 from .company_context import COMPANY_CONTEXT
 
 
@@ -84,3 +86,45 @@ user: {request.message}
     return ChatResponse(
         reply=response.text
     )
+
+
+# POST /report/generate
+# Spring 백엔드가 내부적으로 호출하는 전용 엔드포인트 (프론트가 직접 호출하지 않음)
+# 사원 이름 + 퀴즈 응답 9개 + 3행시(가변 2~4행)를 받아서 reportContent + keywords(4개)를 반환합니다.
+@app.post("/report/generate", response_model=ReportResponse)
+def generate_report(request: ReportRequest):
+    quiz_responses = [r.model_dump() for r in request.quizResponses]
+    acrostic_lines = [l.model_dump() for l in request.acrosticLines]
+    prompt = build_report_prompt(request.employeeName, quiz_responses, acrostic_lines)
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=REPORT_SYSTEM_PROMPT
+            )
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Gemini API 호출에 실패했습니다."
+        )
+
+    # Gemini가 ```json ... ``` 코드블록으로 감싸서 줄 때가 있어서 벗겨내고 파싱합니다.
+    raw_text = response.text.strip()
+    if raw_text.startswith("```"):
+        raw_text = raw_text.strip("`")
+        if raw_text.startswith("json"):
+            raw_text = raw_text[4:]
+        raw_text = raw_text.strip()
+
+    try:
+        llm_result = json.loads(raw_text)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="AI 응답을 리포트 형식으로 해석하지 못했습니다."
+        )
+
+    return ReportResponse(**llm_result)
