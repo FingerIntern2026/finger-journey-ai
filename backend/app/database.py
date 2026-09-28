@@ -6,7 +6,7 @@ from urllib.parse import parse_qsl, urlsplit
 from dotenv import load_dotenv
 from sqlalchemy import URL, create_engine, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -47,6 +47,10 @@ engine: Engine = create_engine(
     pool_pre_ping=True,
 )
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
+
+
+class Base(DeclarativeBase):
+    pass
 
 
 def get_db() -> Generator[Session, None, None]:
