@@ -3,3 +3,8 @@ uvicorn[standard]
 python-dotenv
 google-genai
 pydantic
+sqlalchemy
+psycopg[binary]
+pgvector
+sentence-transformers
+torch
