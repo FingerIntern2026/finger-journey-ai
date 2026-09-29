@@ -45,14 +45,17 @@ class RagAnswerChainTest(unittest.TestCase):
             ),
         )
 
-        answer = chain.answer(
-            "학자금 지원 대상은 누구인가요?",
-            history=[("user", "복지제도에 대해 알려줘")],
-        )
+        with self.assertLogs("uvicorn.error", level="INFO") as logs:
+            answer = chain.answer(
+                "학자금 지원 대상은 누구인가요?",
+                history=[("user", "복지제도에 대해 알려줘")],
+            )
 
         self.assertIn("대학생 자녀", answer.reply)
         self.assertEqual(len(answer.sources), 1)
         self.assertEqual(answer.sources[0].file_name, "학자금지원기준.md")
+        self.assertTrue(any("학자금지원기준.md" in log for log in logs.output))
+        self.assertTrue(any("대학생 자녀" in log for log in logs.output))
 
     def test_does_not_call_model_when_no_documents_are_found(self) -> None:
         model = FakeListChatModel(responses=["호출되면 안 된다."])

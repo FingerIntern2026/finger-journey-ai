@@ -1,4 +1,5 @@
 import os
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import lru_cache
@@ -13,6 +14,9 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from .config import GEMINI_CHAT_MODEL
 from .prompts import RAG_SYSTEM_PROMPT, RAG_USER_PROMPT
 from .retriever import PgVectorRetriever
+
+
+logger = logging.getLogger("uvicorn.error")
 
 
 @dataclass(frozen=True)
@@ -57,6 +61,8 @@ class RagAnswerChain:
                 sources=[],
             )
 
+        self._log_evidence(question, documents)
+
         reply = self.answer_chain.invoke(
             {
                 "context": self._format_context(documents),
@@ -68,6 +74,24 @@ class RagAnswerChain:
             reply=reply,
             sources=self._collect_sources(documents),
         )
+
+    @staticmethod
+    def _log_evidence(
+        question: str,
+        documents: Sequence[Document],
+    ) -> None:
+        logger.info("RAG evidence for question=%r", question)
+        for index, document in enumerate(documents, start=1):
+            metadata = document.metadata
+            evidence = " ".join(document.page_content.split())[:500]
+            logger.info(
+                "RAG evidence #%d file=%s heading=%s similarity=%.4f content=%s",
+                index,
+                metadata.get("file_name", "알 수 없음"),
+                metadata.get("heading") or "제목 없음",
+                float(metadata.get("similarity", 0.0)),
+                evidence,
+            )
 
     @staticmethod
     def _format_context(documents: Sequence[Document]) -> str:
