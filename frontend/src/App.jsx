@@ -3,12 +3,12 @@ import ReactMarkdown from "react-markdown";
 import "./App.css";
 
 // 진입 시 채팅바 위에 보여줄 추천 질문 칩
-// company_context.py의 데모 규정 항목(근무시간/연차/재택/복장)에 맞춰 구성
+// 적재된 사내 문서에서 답변할 수 있는 자주 묻는 질문으로 구성
 const SUGGESTED_QUESTIONS = [
   "근무시간이 어떻게 되나요?",
-  "연차는 어떻게 신청하나요?",
-  "재택근무 가능한가요?",
-  "복장 규정이 있나요?",
+  "전자결재는 어떻게 상신하나요?",
+  "팀 회식비는 어떻게 신청하나요?",
+  "법인카드 사용내역은 어떻게 정산하나요?",
 ];
 
 function App() {
