@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import "./App.css";
 
 // 진입 시 채팅바 위에 보여줄 추천 질문 칩
@@ -120,7 +121,11 @@ function App() {
             }`}
           >
             <div className="message-bubble">
-              {message.text}
+              {message.role === "assistant" ? (
+                <ReactMarkdown>{message.text}</ReactMarkdown>
+              ) : (
+                message.text
+              )}
             </div>
           </div>
         ))}

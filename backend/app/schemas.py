@@ -19,8 +19,53 @@ class ChatRequest(BaseModel):
 
 
 # 챗봇이 답변 줄 때 쓰는 틀 (응답)
+class ChatSource(BaseModel):
+    file_name: str
+    category: str
+    heading: str | None
+    similarity: float
+
+
 class ChatResponse(BaseModel):
     reply: str
+    sources: list[ChatSource] = Field(default_factory=list)
+
+
+class IngestionErrorResponse(BaseModel):
+    file_path: str
+    message: str
+
+
+class IngestionResponse(BaseModel):
+    found: int
+    ingested: int
+    updated: int
+    skipped: int
+    failed: int
+    chunks_created: int
+    errors: list[IngestionErrorResponse]
+
+
+class RagSearchRequest(BaseModel):
+    query: str = Field(min_length=1)
+    limit: int = Field(default=5, ge=1, le=20)
+    category: str | None = None
+
+
+class RagSearchResult(BaseModel):
+    content: str
+    chunk_id: int
+    document_id: int
+    heading: str | None
+    file_path: str
+    file_name: str
+    category: str
+    similarity: float
+
+
+class RagSearchResponse(BaseModel):
+    query: str
+    results: list[RagSearchResult]
 
 
 # ===== AI 완주 리포트 =====

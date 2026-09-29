@@ -3,3 +3,12 @@ uvicorn[standard]
 python-dotenv
 google-genai
 pydantic
+langchain-core
+langchain-google-genai
+langchain-huggingface
+langchain-text-splitters
+sqlalchemy
+psycopg[binary]
+pgvector
+sentence-transformers
+torch
