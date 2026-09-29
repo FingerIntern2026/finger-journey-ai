@@ -1,3 +1,5 @@
+import logging
+
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
@@ -8,6 +10,9 @@ from ..database import SessionLocal
 from .config import DEFAULT_RETRIEVAL_LIMIT, MAX_RETRIEVAL_LIMIT
 from .document_repository import DocumentRepository
 from .embeddings import get_embeddings
+
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class PgVectorRetriever(BaseRetriever):
@@ -27,6 +32,7 @@ class PgVectorRetriever(BaseRetriever):
         *,
         run_manager: CallbackManagerForRetrieverRun,
     ) -> list[Document]:
+        logger.info("RAG retrieval query=%r", query)
         query_embedding = self.embeddings.embed_query(query)
         with SessionLocal() as session:
             hits = DocumentRepository(session).search_similar(

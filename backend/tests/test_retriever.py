@@ -42,9 +42,16 @@ class PgVectorRetrieverTest(unittest.TestCase):
             category="복지제도",
         )
 
-        documents = retriever.invoke("학자금 지원 대상은 누구인가요?")
+        with self.assertLogs("uvicorn.error", level="INFO") as logs:
+            documents = retriever.invoke("학자금 지원 대상은 누구인가요?")
 
         self.assertEqual(len(documents), 1)
+        self.assertTrue(
+            any(
+                "학자금 지원 대상은 누구인가요?" in log
+                for log in logs.output
+            )
+        )
         self.assertEqual(documents[0].metadata["file_name"], "학자금.md")
         self.assertEqual(documents[0].metadata["similarity"], 0.91)
         repository_class.return_value.search_similar.assert_called_once_with(
