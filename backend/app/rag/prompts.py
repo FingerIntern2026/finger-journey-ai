@@ -11,10 +11,7 @@ CONTEXTUALIZE_SYSTEM_PROMPT = """당신은 대화형 사내 문서 검색을 위
 6. 가장 최근 대화의 주제를 우선하되, 사용자가 새로운 주제로 완전한 질문을 했다면 이전 주제를 섞지 말아야 한다.
 """
 
-CONTEXTUALIZE_USER_PROMPT = """[이전 대화]
-{history}
-
-[현재 질문]
+CONTEXTUALIZE_USER_PROMPT = """[현재 질문]
 {question}
 """
 

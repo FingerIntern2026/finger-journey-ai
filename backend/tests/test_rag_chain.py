@@ -16,6 +16,34 @@ class FakeRetriever(BaseRetriever):
 
 
 class RagAnswerChainTest(unittest.TestCase):
+    def test_builds_a_standalone_question_with_chat_history(self) -> None:
+        chain = RagAnswerChain(
+            retriever=FakeRetriever(documents=[]),
+            chat_model=FakeListChatModel(
+                responses=["시차출퇴근제의 세부 운영방법은 무엇인가요?"]
+            ),
+        )
+
+        rewritten_question = chain.question_rewriter.invoke(
+            {
+                "chat_history": chain._to_chat_messages(
+                    [
+                        ("user", "시차출퇴근제 신청 방법을 알려줘"),
+                        (
+                            "assistant",
+                            "적용 가능한 세부 운영방법도 안내해 드릴까요?",
+                        ),
+                    ]
+                ),
+                "question": "세부 운영방법",
+            }
+        )
+
+        self.assertEqual(
+            rewritten_question,
+            "시차출퇴근제의 세부 운영방법은 무엇인가요?",
+        )
+
     def test_converts_history_to_langchain_messages(self) -> None:
         messages = RagAnswerChain._to_chat_messages(
             [

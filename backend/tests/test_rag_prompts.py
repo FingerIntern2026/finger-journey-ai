@@ -13,7 +13,6 @@ class RagPromptTest(unittest.TestCase):
         self.assertIn("직접 답하지", CONTEXTUALIZE_SYSTEM_PROMPT)
         self.assertIn("검색 질문 한 문장만", CONTEXTUALIZE_SYSTEM_PROMPT)
         self.assertIn("원문을 그대로 반환", CONTEXTUALIZE_SYSTEM_PROMPT)
-        self.assertIn("{history}", CONTEXTUALIZE_USER_PROMPT)
         self.assertIn("{question}", CONTEXTUALIZE_USER_PROMPT)
 
     def test_requires_progressive_answering(self) -> None:

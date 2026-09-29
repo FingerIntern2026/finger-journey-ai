@@ -8,12 +8,17 @@ from langchain_core.documents import Document
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.retrievers import BaseRetriever
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from .config import GEMINI_CHAT_MODEL
-from .prompts import RAG_SYSTEM_PROMPT, RAG_USER_PROMPT
+from .prompts import (
+    CONTEXTUALIZE_SYSTEM_PROMPT,
+    CONTEXTUALIZE_USER_PROMPT,
+    RAG_SYSTEM_PROMPT,
+    RAG_USER_PROMPT,
+)
 from .retriever import PgVectorRetriever
 
 
@@ -42,6 +47,16 @@ class RagAnswerChain:
     ) -> None:
         self.retriever = retriever or PgVectorRetriever()
         self.chat_model = chat_model or self._create_chat_model()
+        contextualize_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", CONTEXTUALIZE_SYSTEM_PROMPT),
+                MessagesPlaceholder("chat_history"),
+                ("human", CONTEXTUALIZE_USER_PROMPT),
+            ]
+        )
+        self.question_rewriter = (
+            contextualize_prompt | self.chat_model | StrOutputParser()
+        )
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", RAG_SYSTEM_PROMPT),
