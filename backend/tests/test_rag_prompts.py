@@ -16,9 +16,11 @@ class RagPromptTest(unittest.TestCase):
         self.assertIn("{input}", CONTEXTUALIZE_USER_PROMPT)
 
     def test_requires_progressive_answering(self) -> None:
-        self.assertIn("핵심 답을 바로 제시", RAG_SYSTEM_PROMPT)
-        self.assertIn("묻지 않은 관련 규정을 한꺼번에 나열하지", RAG_SYSTEM_PROMPT)
-        self.assertIn("후속 질문", RAG_SYSTEM_PROMPT)
+        self.assertIn("직접 물어본 정보만", RAG_SYSTEM_PROMPT)
+        self.assertIn("답변 길이는 문장 수로 고정하지", RAG_SYSTEM_PROMPT)
+        self.assertIn("정확히 이해하는 데 필요한 만큼", RAG_SYSTEM_PROMPT)
+        self.assertIn("후속 질문으로만 제안", RAG_SYSTEM_PROMPT)
+        self.assertIn("시차출퇴근제의 시간대나 운영방법", RAG_SYSTEM_PROMPT)
 
     def test_actively_suggests_answerable_contextual_follow_up(self) -> None:
         self.assertIn("후속 질문을 적극적으로 제안", RAG_SYSTEM_PROMPT)
