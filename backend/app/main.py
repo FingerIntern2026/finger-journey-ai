@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
 
+from .chat.router import get_chat_router
 from .schemas import (
     ChatRequest,
     ChatResponse,
@@ -22,7 +23,6 @@ from .schemas import (
     ReportResponse,
 )
 from .report_prompts import REPORT_SYSTEM_PROMPT, build_report_prompt
-from .rag.chain import get_rag_answer_chain
 from .rag.ingestion_service import get_ingestion_service
 from .rag.retriever import PgVectorRetriever
 from .rag.warmup import warm_up_rag
@@ -85,12 +85,12 @@ def search_documents(request: RagSearchRequest):
 
 # POST /api/chat
 # 프론트에서 현재 질문(message)과 이전 대화(history)를 받아
-# 사내 규정과 함께 Gemini에 전달합니다.
+# 의도를 분류한 뒤 사내 문서 검색 또는 일반 응답 경로로 전달합니다.
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
     try:
-        answer = get_rag_answer_chain().answer(
-            question=request.message,
+        answer = get_chat_router().answer(
+            message=request.message,
             history=[
                 (turn.role, turn.text)
                 for turn in request.history
@@ -99,7 +99,7 @@ def chat(request: ChatRequest):
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="RAG 답변 생성에 실패했습니다."
+            detail="챗봇 답변 생성에 실패했습니다."
         )
 
     return ChatResponse(
