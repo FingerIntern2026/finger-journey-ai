@@ -38,6 +38,28 @@ class IngestionResponse(BaseModel):
     errors: list[IngestionErrorResponse]
 
 
+class RagSearchRequest(BaseModel):
+    query: str = Field(min_length=1)
+    limit: int = Field(default=5, ge=1, le=20)
+    category: str | None = None
+
+
+class RagSearchResult(BaseModel):
+    content: str
+    chunk_id: int
+    document_id: int
+    heading: str | None
+    file_path: str
+    file_name: str
+    category: str
+    similarity: float
+
+
+class RagSearchResponse(BaseModel):
+    query: str
+    results: list[RagSearchResult]
+
+
 # ===== AI 완주 리포트 =====
 # 필드명을 Spring의 AiReportRequestDto/AiReportResponseDto(Jackson, camelCase 직렬화)와
 # 그대로 맞춰서, 양쪽에서 별도 변환 없이 바로 주고받을 수 있게 함

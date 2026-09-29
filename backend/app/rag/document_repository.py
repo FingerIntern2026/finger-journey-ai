@@ -1,10 +1,23 @@
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 from langchain_core.documents import Document
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from ..models import RagDocument, RagDocumentChunk
+
+
+@dataclass(frozen=True)
+class SearchHit:
+    chunk_id: int
+    document_id: int
+    content: str
+    heading: str | None
+    file_path: str
+    file_name: str
+    category: str
+    similarity: float
 
 
 class DocumentRepository:
@@ -86,6 +99,39 @@ class DocumentRepository:
         document.status = "FAILED"
         document.error_message = error_message[:2_000]
         self.session.commit()
+
+    def search_similar(
+        self,
+        query_embedding: list[float],
+        limit: int,
+        category: str | None = None,
+    ) -> list[SearchHit]:
+        distance = RagDocumentChunk.embedding.cosine_distance(query_embedding)
+        similarity = (1 - distance).label("similarity")
+        statement = (
+            select(RagDocumentChunk, RagDocument, similarity)
+            .join(RagDocument, RagDocument.id == RagDocumentChunk.document_id)
+            .where(RagDocument.status == "COMPLETED")
+            .order_by(distance)
+            .limit(limit)
+        )
+        if category:
+            statement = statement.where(RagDocument.category == category)
+
+        rows = self.session.execute(statement).all()
+        return [
+            SearchHit(
+                chunk_id=chunk.id,
+                document_id=document.id,
+                content=chunk.content,
+                heading=chunk.heading,
+                file_path=document.file_path,
+                file_name=document.file_name,
+                category=document.category,
+                similarity=float(score),
+            )
+            for chunk, document, score in rows
+        ]
 
     @staticmethod
     def _optional_text(value: object) -> str | None:

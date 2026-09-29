@@ -14,6 +14,8 @@ from .schemas import (
     ChatRequest,
     ChatResponse,
     IngestionResponse,
+    RagSearchRequest,
+    RagSearchResponse,
     ReportRequest,
     ReportResponse,
 )
@@ -21,6 +23,7 @@ from .prompts import SYSTEM_PROMPT
 from .report_prompts import REPORT_SYSTEM_PROMPT, build_report_prompt
 from .company_context import COMPANY_CONTEXT
 from .rag.ingestion_service import get_ingestion_service
+from .rag.retriever import PgVectorRetriever
 
 
 # .env 파일의 환경변수(GEMINI_API_KEY 등)를 읽어옵니다.
@@ -47,6 +50,24 @@ app.add_middleware(
 @app.post("/api/rag/documents/ingest", response_model=IngestionResponse)
 def ingest_documents():
     return get_ingestion_service().ingest_directory()
+
+
+@app.post("/api/rag/search", response_model=RagSearchResponse)
+def search_documents(request: RagSearchRequest):
+    documents = PgVectorRetriever(
+        search_limit=request.limit,
+        category=request.category,
+    ).invoke(request.query)
+    return RagSearchResponse(
+        query=request.query,
+        results=[
+            {
+                "content": document.page_content,
+                **document.metadata,
+            }
+            for document in documents
+        ],
+    )
 
 
 # POST /api/chat
