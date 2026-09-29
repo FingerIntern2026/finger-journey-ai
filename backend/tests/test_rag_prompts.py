@@ -1,9 +1,21 @@
 import unittest
 
-from app.rag.prompts import RAG_SYSTEM_PROMPT
+from app.rag.prompts import (
+    CONTEXTUALIZE_SYSTEM_PROMPT,
+    CONTEXTUALIZE_USER_PROMPT,
+    RAG_SYSTEM_PROMPT,
+)
 
 
 class RagPromptTest(unittest.TestCase):
+    def test_contextualizer_creates_only_a_standalone_search_question(self) -> None:
+        self.assertIn("독립적인 검색 질문", CONTEXTUALIZE_SYSTEM_PROMPT)
+        self.assertIn("직접 답하지", CONTEXTUALIZE_SYSTEM_PROMPT)
+        self.assertIn("검색 질문 한 문장만", CONTEXTUALIZE_SYSTEM_PROMPT)
+        self.assertIn("원문을 그대로 반환", CONTEXTUALIZE_SYSTEM_PROMPT)
+        self.assertIn("{history}", CONTEXTUALIZE_USER_PROMPT)
+        self.assertIn("{question}", CONTEXTUALIZE_USER_PROMPT)
+
     def test_requires_progressive_answering(self) -> None:
         self.assertIn("핵심 답을 바로 제시", RAG_SYSTEM_PROMPT)
         self.assertIn("묻지 않은 관련 규정을 한꺼번에 나열하지", RAG_SYSTEM_PROMPT)
