@@ -11,6 +11,37 @@ from app.chat.schemas import ChatIntent, IntentResult
 
 
 class IntentClassifierTest(unittest.TestCase):
+    def test_accepts_each_supported_structured_route(self) -> None:
+        expected_results = iter(
+            [
+                IntentResult(intent=ChatIntent.POLICY_QUESTION),
+                IntentResult(intent=ChatIntent.CASUAL, reply="반가워요."),
+                IntentResult(
+                    intent=ChatIntent.AMBIGUOUS,
+                    reply="어떤 내용이 궁금하신가요?",
+                ),
+                IntentResult(
+                    intent=ChatIntent.OUT_OF_SCOPE,
+                    reply="사내 문서 안내를 도와드릴 수 있어요.",
+                ),
+            ]
+        )
+        chat_model = MagicMock()
+        chat_model.with_structured_output.return_value = RunnableLambda(
+            lambda _: next(expected_results)
+        )
+        classifier = IntentClassifier(chat_model=chat_model)
+
+        results = [
+            classifier.classify("테스트 메시지")
+            for _ in range(len(ChatIntent))
+        ]
+
+        self.assertEqual(
+            [result.intent for result in results],
+            list(ChatIntent),
+        )
+
     def test_returns_structured_intent_result(self) -> None:
         prompt_values = []
         expected = IntentResult(

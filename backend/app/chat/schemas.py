@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ChatIntent(str, Enum):
@@ -25,3 +25,16 @@ class IntentResult(BaseModel):
             "Policy questions leave this empty and continue to RAG."
         ),
     )
+
+    @model_validator(mode="after")
+    def validate_reply_for_route(self) -> "IntentResult":
+        if self.intent == ChatIntent.POLICY_QUESTION:
+            if self.reply is not None:
+                raise ValueError("POLICY_QUESTION must not include a reply.")
+            return self
+
+        if self.reply is None or not self.reply.strip():
+            raise ValueError(f"{self.intent.value} must include a reply.")
+
+        self.reply = self.reply.strip()
+        return self
