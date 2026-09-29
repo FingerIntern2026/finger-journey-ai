@@ -23,6 +23,21 @@ class ChatResponse(BaseModel):
     reply: str
 
 
+class IngestionErrorResponse(BaseModel):
+    file_path: str
+    message: str
+
+
+class IngestionResponse(BaseModel):
+    found: int
+    ingested: int
+    updated: int
+    skipped: int
+    failed: int
+    chunks_created: int
+    errors: list[IngestionErrorResponse]
+
+
 # ===== AI 완주 리포트 =====
 # 필드명을 Spring의 AiReportRequestDto/AiReportResponseDto(Jackson, camelCase 직렬화)와
 # 그대로 맞춰서, 양쪽에서 별도 변환 없이 바로 주고받을 수 있게 함

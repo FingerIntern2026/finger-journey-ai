@@ -1,5 +1,9 @@
 import os
+from pathlib import Path
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DOCUMENTS_DIRECTORY = PROJECT_ROOT / "data" / "documents"
 
 CHUNK_SIZE = 1_000
 CHUNK_OVERLAP = 150

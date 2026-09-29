@@ -10,10 +10,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import types
 
-from .schemas import ChatRequest, ChatResponse, ReportRequest, ReportResponse
+from .schemas import (
+    ChatRequest,
+    ChatResponse,
+    IngestionResponse,
+    ReportRequest,
+    ReportResponse,
+)
 from .prompts import SYSTEM_PROMPT
 from .report_prompts import REPORT_SYSTEM_PROMPT, build_report_prompt
 from .company_context import COMPANY_CONTEXT
+from .rag.ingestion_service import get_ingestion_service
 
 
 # .env 파일의 환경변수(GEMINI_API_KEY 등)를 읽어옵니다.
@@ -35,6 +42,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.post("/api/rag/documents/ingest", response_model=IngestionResponse)
+def ingest_documents():
+    return get_ingestion_service().ingest_directory()
 
 
 # POST /api/chat
