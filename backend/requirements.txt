@@ -4,6 +4,7 @@ python-dotenv
 google-genai
 pydantic
 langchain-core
+langchain-huggingface
 langchain-text-splitters
 sqlalchemy
 psycopg[binary]
