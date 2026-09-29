@@ -2,7 +2,9 @@
 # FastAPI 서버의 시작점. 앱을 생성하고 챗봇 API 엔드포인트를 정의합니다.
 
 import json
+import logging
 import os
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -23,6 +25,7 @@ from .report_prompts import REPORT_SYSTEM_PROMPT, build_report_prompt
 from .rag.chain import get_rag_answer_chain
 from .rag.ingestion_service import get_ingestion_service
 from .rag.retriever import PgVectorRetriever
+from .rag.warmup import warm_up_rag
 
 
 # .env 파일의 환경변수(GEMINI_API_KEY 등)를 읽어옵니다.
@@ -35,8 +38,19 @@ client = genai.Client(
 )
 
 
+logger = logging.getLogger("uvicorn.error")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    logger.info("RAG embedding model warm-up started.")
+    warm_up_rag()
+    logger.info("RAG embedding model warm-up completed.")
+    yield
+
+
 # FastAPI 앱을 생성합니다.
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:5174"],
