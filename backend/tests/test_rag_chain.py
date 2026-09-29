@@ -2,6 +2,7 @@ import unittest
 
 from langchain_core.documents import Document
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.retrievers import BaseRetriever
 
 from app.rag.chain import RagAnswerChain
@@ -15,6 +16,29 @@ class FakeRetriever(BaseRetriever):
 
 
 class RagAnswerChainTest(unittest.TestCase):
+    def test_converts_history_to_langchain_messages(self) -> None:
+        messages = RagAnswerChain._to_chat_messages(
+            [
+                ("user", "시차출퇴근제 신청 방법을 알려줘"),
+                ("assistant", "희망일 5일 전까지 신청해야 해요."),
+            ]
+        )
+
+        self.assertIsInstance(messages[0], HumanMessage)
+        self.assertEqual(
+            messages[0].content,
+            "시차출퇴근제 신청 방법을 알려줘",
+        )
+        self.assertIsInstance(messages[1], AIMessage)
+        self.assertEqual(
+            messages[1].content,
+            "희망일 5일 전까지 신청해야 해요.",
+        )
+
+    def test_rejects_unknown_history_role(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Unsupported chat history role"):
+            RagAnswerChain._to_chat_messages([("system", "잘못된 역할")])
+
     def test_generates_answer_and_deduplicates_sources(self) -> None:
         documents = [
             Document(

@@ -1,11 +1,12 @@
-import os
 import logging
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import lru_cache
 
 from langchain_core.documents import Document
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.retrievers import BaseRetriever
@@ -116,6 +117,20 @@ class RagAnswerChain:
         if not history:
             return "이전 대화 없음"
         return "\n".join(f"{role}: {text}" for role, text in history)
+
+    @staticmethod
+    def _to_chat_messages(
+        history: Sequence[tuple[str, str]],
+    ) -> list[BaseMessage]:
+        messages: list[BaseMessage] = []
+        for role, text in history:
+            if role == "user":
+                messages.append(HumanMessage(content=text))
+            elif role == "assistant":
+                messages.append(AIMessage(content=text))
+            else:
+                raise ValueError(f"Unsupported chat history role: {role}")
+        return messages
 
     @staticmethod
     def _collect_sources(documents: Sequence[Document]) -> list[AnswerSource]:
