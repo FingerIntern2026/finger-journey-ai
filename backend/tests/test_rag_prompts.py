@@ -20,12 +20,12 @@ class RagPromptTest(unittest.TestCase):
         self.assertIn("묻지 않은 관련 규정을 한꺼번에 나열하지", RAG_SYSTEM_PROMPT)
         self.assertIn("후속 질문", RAG_SYSTEM_PROMPT)
 
-    def test_only_suggests_answerable_specific_follow_up(self) -> None:
-        self.assertIn("답이 명확하고 충분하게 포함", RAG_SYSTEM_PROMPT)
+    def test_actively_suggests_answerable_contextual_follow_up(self) -> None:
+        self.assertIn("후속 질문을 적극적으로 제안", RAG_SYSTEM_PROMPT)
         self.assertIn("추론이 필요", RAG_SYSTEM_PROMPT)
-        self.assertIn("범위가 모호한 표현", RAG_SYSTEM_PROMPT)
-        self.assertIn("구체적인 항목 하나만", RAG_SYSTEM_PROMPT)
-        self.assertIn("후속 질문 없이", RAG_SYSTEM_PROMPT)
+        self.assertIn("대상이 명확", RAG_SYSTEM_PROMPT)
+        self.assertIn("사용할 수 있다", RAG_SYSTEM_PROMPT)
+        self.assertIn("근거가 전혀 없을 때만", RAG_SYSTEM_PROMPT)
 
     def test_allows_detailed_answers_when_requested(self) -> None:
         self.assertIn("상세 설명", RAG_SYSTEM_PROMPT)
