@@ -1,0 +1,58 @@
+[
+  {
+    "message": "근무시간이 어떻게 되나요?",
+    "expected_intent": "POLICY_QUESTION"
+  },
+  {
+    "message": "퇴직하려면 어떤 서류가 필요한가요?",
+    "expected_intent": "POLICY_QUESTION"
+  },
+  {
+    "message": "전자결제 상신 어케해",
+    "expected_intent": "POLICY_QUESTION"
+  },
+  {
+    "message": "출장비 정산 어케함",
+    "expected_intent": "POLICY_QUESTION"
+  },
+  {
+    "message": "안녕",
+    "expected_intent": "CASUAL"
+  },
+  {
+    "message": "집에 가고 싶다",
+    "expected_intent": "CASUAL"
+  },
+  {
+    "message": "오늘 너무 피곤하다",
+    "expected_intent": "CASUAL"
+  },
+  {
+    "message": "다 때려치우고 싶다",
+    "expected_intent": "CASUAL"
+  },
+  {
+    "message": "반차 쓰고 집에 갈까?",
+    "expected_intent": "AMBIGUOUS"
+  },
+  {
+    "message": "이거 신청해야 해?",
+    "expected_intent": "AMBIGUOUS"
+  },
+  {
+    "message": "그냥 안 하면 안 돼?",
+    "expected_intent": "AMBIGUOUS"
+  },
+  {
+    "message": "오늘 날씨 알려줘",
+    "expected_intent": "OUT_OF_SCOPE"
+  },
+  {
+    "message": "주식 종목 추천해줘",
+    "expected_intent": "OUT_OF_SCOPE"
+  },
+  {
+    "message": "파이썬으로 게임 만들어줘",
+    "expected_intent": "OUT_OF_SCOPE"
+  }
+]

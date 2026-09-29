@@ -64,7 +64,6 @@ class IntentClassifier:
         return ChatGoogleGenerativeAI(
             model=GEMINI_CHAT_MODEL,
             google_api_key=api_key,
-            temperature=0,
         )
 
 
