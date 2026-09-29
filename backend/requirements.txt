@@ -3,6 +3,8 @@ uvicorn[standard]
 python-dotenv
 google-genai
 pydantic
+langchain-core
+langchain-text-splitters
 sqlalchemy
 psycopg[binary]
 pgvector
