@@ -12,7 +12,7 @@ CONTEXTUALIZE_SYSTEM_PROMPT = """당신은 대화형 사내 문서 검색을 위
 """
 
 CONTEXTUALIZE_USER_PROMPT = """[현재 질문]
-{question}
+{input}
 """
 
 

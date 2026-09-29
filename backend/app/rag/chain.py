@@ -11,6 +11,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.retrievers import BaseRetriever
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_classic.chains import create_history_aware_retriever
 
 from .config import GEMINI_CHAT_MODEL
 from .prompts import (
@@ -54,8 +55,10 @@ class RagAnswerChain:
                 ("human", CONTEXTUALIZE_USER_PROMPT),
             ]
         )
-        self.question_rewriter = (
-            contextualize_prompt | self.chat_model | StrOutputParser()
+        self.history_aware_retriever = create_history_aware_retriever(
+            llm=self.chat_model,
+            retriever=self.retriever,
+            prompt=contextualize_prompt,
         )
         prompt = ChatPromptTemplate.from_messages(
             [

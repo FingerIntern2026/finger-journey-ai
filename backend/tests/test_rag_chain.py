@@ -4,27 +4,33 @@ from langchain_core.documents import Document
 from langchain_core.language_models.fake_chat_models import FakeListChatModel
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.retrievers import BaseRetriever
+from pydantic import Field
 
 from app.rag.chain import RagAnswerChain
 
 
 class FakeRetriever(BaseRetriever):
     documents: list[Document]
+    queries: list[str] = Field(default_factory=list)
 
     def _get_relevant_documents(self, query: str, *, run_manager):
+        self.queries.append(query)
         return self.documents
 
 
 class RagAnswerChainTest(unittest.TestCase):
-    def test_builds_a_standalone_question_with_chat_history(self) -> None:
+    def test_official_history_aware_retriever_uses_rewritten_question(
+        self,
+    ) -> None:
+        retriever = FakeRetriever(documents=[])
         chain = RagAnswerChain(
-            retriever=FakeRetriever(documents=[]),
+            retriever=retriever,
             chat_model=FakeListChatModel(
                 responses=["시차출퇴근제의 세부 운영방법은 무엇인가요?"]
             ),
         )
 
-        rewritten_question = chain.question_rewriter.invoke(
+        documents = chain.history_aware_retriever.invoke(
             {
                 "chat_history": chain._to_chat_messages(
                     [
@@ -35,13 +41,14 @@ class RagAnswerChainTest(unittest.TestCase):
                         ),
                     ]
                 ),
-                "question": "세부 운영방법",
+                "input": "세부 운영방법",
             }
         )
 
+        self.assertEqual(documents, [])
         self.assertEqual(
-            rewritten_question,
-            "시차출퇴근제의 세부 운영방법은 무엇인가요?",
+            retriever.queries,
+            ["시차출퇴근제의 세부 운영방법은 무엇인가요?"],
         )
 
     def test_converts_history_to_langchain_messages(self) -> None:
