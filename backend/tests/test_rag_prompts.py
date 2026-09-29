@@ -13,6 +13,11 @@ class RagPromptTest(unittest.TestCase):
         self.assertIn("상세 설명", RAG_SYSTEM_PROMPT)
         self.assertIn("충분히 구조화", RAG_SYSTEM_PROMPT)
 
+    def test_requires_friendly_tone_and_one_trailing_emoji(self) -> None:
+        self.assertIn("친근한 온보딩 챗봇", RAG_SYSTEM_PROMPT)
+        self.assertIn("정확히 1개", RAG_SYSTEM_PROMPT)
+        self.assertIn("답변의 마지막 글자", RAG_SYSTEM_PROMPT)
+
 
 if __name__ == "__main__":
     unittest.main()
