@@ -97,10 +97,14 @@ class RagAnswerChainTest(unittest.TestCase):
                 },
             ),
         ]
+        retriever = FakeRetriever(documents=documents)
         chain = RagAnswerChain(
-            retriever=FakeRetriever(documents=documents),
+            retriever=retriever,
             chat_model=FakeListChatModel(
-                responses=["학자금은 임직원의 대학생 자녀에게 지원된다. [1]"]
+                responses=[
+                    "학자금 지원 대상은 누구인가요?",
+                    "학자금은 임직원의 대학생 자녀에게 지원된다. [1]",
+                ]
             ),
         )
 
@@ -111,6 +115,10 @@ class RagAnswerChainTest(unittest.TestCase):
             )
 
         self.assertIn("대학생 자녀", answer.reply)
+        self.assertEqual(
+            retriever.queries,
+            ["학자금 지원 대상은 누구인가요?"],
+        )
         self.assertEqual(len(answer.sources), 1)
         self.assertEqual(answer.sources[0].file_name, "학자금지원기준.md")
         self.assertTrue(any("학자금지원기준.md" in log for log in logs.output))
@@ -118,8 +126,9 @@ class RagAnswerChainTest(unittest.TestCase):
 
     def test_does_not_call_model_when_no_documents_are_found(self) -> None:
         model = FakeListChatModel(responses=["호출되면 안 된다."])
+        retriever = FakeRetriever(documents=[])
         chain = RagAnswerChain(
-            retriever=FakeRetriever(documents=[]),
+            retriever=retriever,
             chat_model=model,
         )
 
@@ -127,6 +136,7 @@ class RagAnswerChainTest(unittest.TestCase):
 
         self.assertIn("찾지 못해", answer.reply)
         self.assertEqual(answer.sources, [])
+        self.assertEqual(retriever.queries, ["자료에 없는 질문"])
 
 
 if __name__ == "__main__":

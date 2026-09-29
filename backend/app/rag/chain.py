@@ -73,7 +73,12 @@ class RagAnswerChain:
         question: str,
         history: Sequence[tuple[str, str]] = (),
     ) -> RagAnswer:
-        documents = self.retriever.invoke(question)
+        documents = self.history_aware_retriever.invoke(
+            {
+                "input": question,
+                "chat_history": self._to_chat_messages(history),
+            }
+        )
         if not documents:
             return RagAnswer(
                 reply="관련 사내 문서를 찾지 못해 답변을 확인할 수 없다.",
