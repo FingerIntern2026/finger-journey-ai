@@ -19,8 +19,16 @@ class ChatRequest(BaseModel):
 
 
 # 챗봇이 답변 줄 때 쓰는 틀 (응답)
+class ChatSource(BaseModel):
+    file_name: str
+    category: str
+    heading: str | None
+    similarity: float
+
+
 class ChatResponse(BaseModel):
     reply: str
+    sources: list[ChatSource] = Field(default_factory=list)
 
 
 class IngestionErrorResponse(BaseModel):

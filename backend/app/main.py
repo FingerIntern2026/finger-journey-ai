@@ -19,9 +19,8 @@ from .schemas import (
     ReportRequest,
     ReportResponse,
 )
-from .prompts import SYSTEM_PROMPT
 from .report_prompts import REPORT_SYSTEM_PROMPT, build_report_prompt
-from .company_context import COMPANY_CONTEXT
+from .rag.chain import get_rag_answer_chain
 from .rag.ingestion_service import get_ingestion_service
 from .rag.retriever import PgVectorRetriever
 
@@ -75,49 +74,31 @@ def search_documents(request: RagSearchRequest):
 # 사내 규정과 함께 Gemini에 전달합니다.
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
-
-    # 이전 대화를 Gemini가 이해하기 쉬운 텍스트 형태로 변환합니다.
-    # 예:
-    # user: 재택근무 가능한가요?
-    # assistant: 재택근무는 팀별 운영 방침에 따라 가능합니다.
-    history_text = "\n".join(
-        f"{turn.role}: {turn.text}"
-        for turn in request.history
-    )
-
-    # Gemini에 전달할 내용을 구성합니다.
-    # 사내 규정 + 이전 대화 + 현재 질문을 함께 전달합니다.
-    contents = f"""
-[사내 규정]
-{COMPANY_CONTEXT}
-
-[이전 대화]
-{history_text if history_text else "이전 대화 없음"}
-
-[현재 질문]
-user: {request.message}
-"""
-
-    # Gemini API를 호출합니다.
     try:
-        response = client.models.generate_content(
-            model="gemini-3.5-flash-lite",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT
-            )
+        answer = get_rag_answer_chain().answer(
+            question=request.message,
+            history=[
+                (turn.role, turn.text)
+                for turn in request.history
+            ],
         )
-
-    # Gemini 호출 중 문제가 발생하면 500 에러를 반환합니다.
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Gemini API 호출에 실패했습니다."
+            detail="RAG 답변 생성에 실패했습니다."
         )
 
-    # Gemini가 생성한 답변 텍스트만 프론트에 반환합니다.
     return ChatResponse(
-        reply=response.text
+        reply=answer.reply,
+        sources=[
+            {
+                "file_name": source.file_name,
+                "category": source.category,
+                "heading": source.heading,
+                "similarity": source.similarity,
+            }
+            for source in answer.sources
+        ],
     )
 
 
