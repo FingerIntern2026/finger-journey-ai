@@ -51,6 +51,54 @@ class RagAnswerChainTest(unittest.TestCase):
             ["시차출퇴근제의 세부 운영방법은 무엇인가요?"],
         )
 
+    def test_rewrites_context_dependent_follow_up_in_answer_flow(self) -> None:
+        retriever = FakeRetriever(documents=[])
+        chain = RagAnswerChain(
+            retriever=retriever,
+            chat_model=FakeListChatModel(
+                responses=["시차출퇴근제의 세부 운영방법은 무엇인가요?"]
+            ),
+        )
+
+        answer = chain.answer(
+            "세부 운영방법",
+            history=[
+                ("user", "시차출퇴근제 신청 방법을 알려줘"),
+                (
+                    "assistant",
+                    "선택 가능한 출퇴근 시간도 안내해 드릴까요?",
+                ),
+            ],
+        )
+
+        self.assertEqual(
+            retriever.queries,
+            ["시차출퇴근제의 세부 운영방법은 무엇인가요?"],
+        )
+        self.assertIn("찾지 못해", answer.reply)
+
+    def test_keeps_complete_new_topic_during_conversation(self) -> None:
+        retriever = FakeRetriever(documents=[])
+        chain = RagAnswerChain(
+            retriever=retriever,
+            chat_model=FakeListChatModel(
+                responses=["학자금 지원 대상은 누구인가요?"]
+            ),
+        )
+
+        chain.answer(
+            "학자금 지원 대상은 누구인가요?",
+            history=[
+                ("user", "시차출퇴근제 신청 방법을 알려줘"),
+                ("assistant", "희망일 5일 전까지 신청해야 해요."),
+            ],
+        )
+
+        self.assertEqual(
+            retriever.queries,
+            ["학자금 지원 대상은 누구인가요?"],
+        )
+
     def test_converts_history_to_langchain_messages(self) -> None:
         messages = RagAnswerChain._to_chat_messages(
             [
